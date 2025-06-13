@@ -8,7 +8,7 @@ class GamePart5:
     
     def handle_map_input(self, key):
         # Don't process movement if menu or status screen is open
-        if self.game.show_menu or self.game.show_status:
+        if self.game.show_menu or self.game.show_status or self.game.game_part3.show_enemy_stats:
             self.handle_menu_keyboard(key)
             return
             
@@ -25,6 +25,8 @@ class GamePart5:
             self.game.show_menu = not self.game.show_menu
         elif key == pygame.K_s:  # S key for status screen
             self.game.show_status = True
+        elif key == pygame.K_e:  # E key for enemy stats screen
+            self.game.game_part3.show_enemy_stats = True
         
         if moved:
             self.game.game_part2.check_enemy_encounter()
@@ -35,6 +37,18 @@ class GamePart5:
         if menu_button_rect.collidepoint(pos):
             self.game.show_menu = not self.game.show_menu
             self.game.show_status = False  # Close status screen if open
+            self.game.game_part3.show_enemy_stats = False  # Close enemy stats screen if open
+            return
+            
+        # If enemy stats screen is open, check for close button
+        if self.game.game_part3.show_enemy_stats:
+            panel_width, panel_height = 450, 400
+            panel_x = (self.game.SCREEN_WIDTH - panel_width) // 2
+            panel_y = (self.game.SCREEN_HEIGHT - panel_height) // 2
+            
+            close_button_rect = pygame.Rect(panel_x + 125, panel_y + 340, 200, 40)
+            if close_button_rect.collidepoint(pos):
+                self.game.game_part3.show_enemy_stats = False
             return
             
         # If status screen is open, check for close button
@@ -50,7 +64,7 @@ class GamePart5:
             
         # If menu is open, check for menu button clicks
         if self.game.show_menu:
-            menu_width, menu_height = 300, 280
+            menu_width, menu_height = 300, 340  # Updated height for new button
             menu_x = (self.game.SCREEN_WIDTH - menu_width) // 2
             menu_y = (self.game.SCREEN_HEIGHT - menu_height) // 2
             
@@ -60,15 +74,22 @@ class GamePart5:
                 self.game.show_status = True
                 self.game.show_menu = False  # Close menu when opening status
                 return
+                
+            # Enemy Stats button
+            enemy_stats_button_rect = pygame.Rect(menu_x + 50, menu_y + 140, 200, 40)
+            if enemy_stats_button_rect.collidepoint(pos):
+                self.game.game_part3.show_enemy_stats = True
+                self.game.show_menu = False  # Close menu when opening enemy stats
+                return
             
             # Quit button
-            quit_button_rect = pygame.Rect(menu_x + 50, menu_y + 140, 200, 40)
+            quit_button_rect = pygame.Rect(menu_x + 50, menu_y + 200, 200, 40)
             if quit_button_rect.collidepoint(pos):
                 pygame.quit()
                 sys.exit()
                 
             # Close button
-            close_button_rect = pygame.Rect(menu_x + 50, menu_y + 200, 200, 40)
+            close_button_rect = pygame.Rect(menu_x + 50, menu_y + 260, 200, 40)
             if close_button_rect.collidepoint(pos):
                 self.game.show_menu = False
     
@@ -92,10 +113,17 @@ class GamePart5:
             self.game.battle.player_run()
     
     def handle_menu_keyboard(self, key):
+        # If enemy stats screen is open
+        if self.game.game_part3.show_enemy_stats:
+            # Close enemy stats screen - Enter or Space
+            if key == pygame.K_RETURN or key == pygame.K_SPACE or key == pygame.K_ESCAPE:
+                self.game.game_part3.show_enemy_stats = False
+            return
+            
         # If status screen is open
         if self.game.show_status:
             # Close status screen - Enter or Space
-            if key == pygame.K_RETURN or key == pygame.K_SPACE:
+            if key == pygame.K_RETURN or key == pygame.K_SPACE or key == pygame.K_ESCAPE:
                 self.game.show_status = False
             return
             
@@ -105,6 +133,12 @@ class GamePart5:
             if key == pygame.K_s:
                 self.game.show_status = True
                 self.game.show_menu = False  # Close menu when opening status
+                return
+                
+            # Enemy Stats button - E key
+            elif key == pygame.K_e:
+                self.game.game_part3.show_enemy_stats = True
+                self.game.show_menu = False  # Close menu when opening enemy stats
                 return
             
             # Quit button - Q key
@@ -141,10 +175,15 @@ class GamePart5:
             
             # Check for battle end conditions
             if self.game.battle.state in ["victory", "defeat", "escape"] and not self.game.battle.action_in_progress:
-                pygame.time.delay(1000)
-                if self.game.battle.state == "defeat":
-                    self.game.player.hp = self.game.player.max_hp // 2  # Recover half HP and continue
-                self.game.game_state = "map"
-                
-                # Debug message to confirm state change
-                print(f"Battle ended with state: {self.game.battle.state}, returning to map")
+                # If there's a level up popup, wait for it to finish before returning to map
+                if hasattr(self.game.battle, 'show_level_up_popup') and self.game.battle.show_level_up_popup:
+                    # Don't return to map yet, wait for popup to finish
+                    print(f"Level up popup active, timer: {self.game.battle.level_up_popup_timer}")
+                    pass
+                else:
+                    # No level up popup or it has finished, return to map after delay
+                    pygame.time.delay(1000)
+                    if self.game.battle.state == "defeat":
+                        self.game.player.hp = self.game.player.max_hp // 2  # Recover half HP and continue
+                    self.game.game_state = "map"
+                    print(f"Battle ended with state: {self.game.battle.state}, returning to map")

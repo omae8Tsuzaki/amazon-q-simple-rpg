@@ -5,6 +5,7 @@ import math
 class GamePart3:
     def __init__(self, game):
         self.game = game
+        self.show_enemy_stats = False
         
     def draw_menu(self):
         # Semi-transparent overlay
@@ -13,7 +14,7 @@ class GamePart3:
         self.game.screen.blit(overlay, (0, 0))
         
         # Menu panel
-        menu_width, menu_height = 300, 280  # Increased height for new button
+        menu_width, menu_height = 300, 340  # Increased height for new button
         menu_x = (self.game.SCREEN_WIDTH - menu_width) // 2
         menu_y = (self.game.SCREEN_HEIGHT - menu_height) // 2
         
@@ -31,19 +32,26 @@ class GamePart3:
         status_text = pygame.font.Font(None, 28).render("View Status (S)", True, self.game.WHITE)
         self.game.screen.blit(status_text, (menu_x + (menu_width - status_text.get_width()) // 2, menu_y + 90))
         
+        # Enemy Stats button
+        enemy_stats_button_rect = pygame.Rect(menu_x + 50, menu_y + 140, 200, 40)
+        pygame.draw.rect(self.game.screen, (100, 100, 150), enemy_stats_button_rect)
+        pygame.draw.rect(self.game.screen, (150, 150, 200), enemy_stats_button_rect, 2)
+        enemy_stats_text = pygame.font.Font(None, 28).render("Enemy Records (E)", True, self.game.WHITE)
+        self.game.screen.blit(enemy_stats_text, (menu_x + (menu_width - enemy_stats_text.get_width()) // 2, menu_y + 150))
+        
         # Quit button
-        quit_button_rect = pygame.Rect(menu_x + 50, menu_y + 140, 200, 40)
+        quit_button_rect = pygame.Rect(menu_x + 50, menu_y + 200, 200, 40)
         pygame.draw.rect(self.game.screen, (150, 50, 50), quit_button_rect)
         pygame.draw.rect(self.game.screen, (200, 100, 100), quit_button_rect, 2)
         quit_text = pygame.font.Font(None, 28).render("Quit Game (Q)", True, self.game.WHITE)
-        self.game.screen.blit(quit_text, (menu_x + (menu_width - quit_text.get_width()) // 2, menu_y + 150))
+        self.game.screen.blit(quit_text, (menu_x + (menu_width - quit_text.get_width()) // 2, menu_y + 210))
         
         # Close button
-        close_button_rect = pygame.Rect(menu_x + 50, menu_y + 200, 200, 40)
+        close_button_rect = pygame.Rect(menu_x + 50, menu_y + 260, 200, 40)
         pygame.draw.rect(self.game.screen, (80, 80, 120), close_button_rect)
         pygame.draw.rect(self.game.screen, (120, 120, 180), close_button_rect, 2)
         close_text = pygame.font.Font(None, 28).render("Close Menu (ESC/C)", True, self.game.WHITE)
-        self.game.screen.blit(close_text, (menu_x + (menu_width - close_text.get_width()) // 2, menu_y + 210))
+        self.game.screen.blit(close_text, (menu_x + (menu_width - close_text.get_width()) // 2, menu_y + 270))
     
     def draw_status_screen(self):
         # Semi-transparent overlay
@@ -128,3 +136,69 @@ class GamePart3:
         pygame.draw.rect(self.game.screen, (120, 120, 180), close_button_rect, 2)
         close_text = pygame.font.Font(None, 28).render("Close (Enter/Space)", True, self.game.WHITE)
         self.game.screen.blit(close_text, (status_x + (status_width - close_text.get_width()) // 2, status_y + 340))
+        
+    def draw_enemy_stats_screen(self):
+        # Semi-transparent overlay
+        overlay = pygame.Surface((self.game.SCREEN_WIDTH, self.game.SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))  # Black with alpha
+        self.game.screen.blit(overlay, (0, 0))
+        
+        # Enemy stats panel
+        panel_width, panel_height = 450, 400
+        panel_x = (self.game.SCREEN_WIDTH - panel_width) // 2
+        panel_y = (self.game.SCREEN_HEIGHT - panel_height) // 2
+        
+        # Draw panel background with red border for enemy stats
+        pygame.draw.rect(self.game.screen, (50, 50, 80), (panel_x, panel_y, panel_width, panel_height))
+        pygame.draw.rect(self.game.screen, (200, 50, 50), (panel_x, panel_y, panel_width, panel_height), 3)
+        
+        # Title
+        title_font = pygame.font.Font(None, 36)
+        title_text = title_font.render("Enemy Records", True, self.game.WHITE)
+        self.game.screen.blit(title_text, (panel_x + (panel_width - title_text.get_width()) // 2, panel_y + 20))
+        
+        # Subtitle
+        subtitle_font = pygame.font.Font(None, 24)
+        subtitle_text = subtitle_font.render(f"Total Enemies Defeated: {self.game.player.defeated_enemies['total']}", True, self.game.WHITE)
+        self.game.screen.blit(subtitle_text, (panel_x + (panel_width - subtitle_text.get_width()) // 2, panel_y + 60))
+        
+        # Enemy types and counts
+        font = pygame.font.Font(None, 28)
+        y_offset = 110
+        
+        # Enemy colors for visual distinction
+        enemy_colors = {
+            "Slime": (0, 100, 200),
+            "Goblin": (0, 150, 0),
+            "Bat": (100, 100, 100),
+            "Zombie": (100, 150, 100),
+            "Wolf": (150, 100, 50)
+        }
+        
+        # Draw enemy stats with icons
+        for i, (enemy_type, count) in enumerate(self.game.player.defeated_enemies.items()):
+            if enemy_type != "total":  # Skip the total count as it's shown in the subtitle
+                # Enemy icon (simple colored square)
+                color = enemy_colors.get(enemy_type, self.game.WHITE)
+                pygame.draw.rect(self.game.screen, color, (panel_x + 50, panel_y + y_offset - 5, 20, 20))
+                pygame.draw.rect(self.game.screen, self.game.WHITE, (panel_x + 50, panel_y + y_offset - 5, 20, 20), 1)
+                
+                # Enemy name and count
+                enemy_text = font.render(f"{enemy_type}: {count} defeated", True, self.game.WHITE)
+                self.game.screen.blit(enemy_text, (panel_x + 90, panel_y + y_offset))
+                
+                # Progress bar showing relative number of defeats
+                max_count = max(1, max([v for k, v in self.game.player.defeated_enemies.items() if k != "total"]))
+                bar_width = 200
+                fill_width = int((count / max_count) * bar_width) if max_count > 0 else 0
+                pygame.draw.rect(self.game.screen, (50, 50, 50), (panel_x + 90, panel_y + y_offset + 25, bar_width, 10))
+                pygame.draw.rect(self.game.screen, color, (panel_x + 90, panel_y + y_offset + 25, fill_width, 10))
+                
+                y_offset += 60
+        
+        # Close button
+        close_button_rect = pygame.Rect(panel_x + 125, panel_y + 340, 200, 40)
+        pygame.draw.rect(self.game.screen, (80, 80, 120), close_button_rect)
+        pygame.draw.rect(self.game.screen, (120, 120, 180), close_button_rect, 2)
+        close_text = pygame.font.Font(None, 28).render("Close (Enter/Space)", True, self.game.WHITE)
+        self.game.screen.blit(close_text, (panel_x + (panel_width - close_text.get_width()) // 2, panel_y + 350))

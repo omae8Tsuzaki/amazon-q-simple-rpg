@@ -21,7 +21,7 @@ FONT = pygame.font.Font(None, 24)
 
 # Game screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Dragon Quest Style RPG")
+pygame.display.set_caption("Simple RPG")
 
 # Experience table (required exp for each level)
 def calculate_exp_for_level(level):
@@ -51,8 +51,10 @@ def main():
     print("- Arrow Keys: Move character")
     print("- M or ESC: Open/close menu")
     print("- S: Open status screen")
+    print("- E: View enemy records")
     print("- In Menu:")
     print("  - S: View status")
+    print("  - E: View enemy records")
     print("  - Q: Quit game")
     print("  - C or ESC: Close menu")
     print("- In Battle:")

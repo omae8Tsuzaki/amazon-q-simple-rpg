@@ -97,6 +97,10 @@ class GamePart2:
         # Draw status screen if it's open
         if self.game.show_status:
             self.game.game_part3.draw_status_screen()
+            
+        # Draw enemy stats screen if it's open
+        if self.game.game_part3.show_enemy_stats:
+            self.game.game_part3.draw_enemy_stats_screen()
         
         # Controls
         controls_text = "Arrow Keys: Move"

@@ -188,3 +188,68 @@ class GamePart4:
                     mp_text = "(3 MP)"
                     mp_surface = pygame.font.Font(None, 18).render(mp_text, True, (100, 100, 255))
                     self.game.screen.blit(mp_surface, (25 + i * 120, 550))
+        
+        # Draw level up popup if active
+        if hasattr(self.game.battle, 'show_level_up_popup') and self.game.battle.show_level_up_popup and self.game.battle.level_up_stats:
+            self.draw_level_up_popup()
+            
+    def draw_level_up_popup(self):
+        # Semi-transparent overlay
+        overlay = pygame.Surface((self.game.SCREEN_WIDTH, self.game.SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))  # Black with alpha
+        self.game.screen.blit(overlay, (0, 0))
+        
+        # Popup panel
+        popup_width, popup_height = 400, 350
+        popup_x = (self.game.SCREEN_WIDTH - popup_width) // 2
+        popup_y = (self.game.SCREEN_HEIGHT - popup_height) // 2
+        
+        # Draw panel background with golden border for level up
+        pygame.draw.rect(self.game.screen, (50, 50, 80), (popup_x, popup_y, popup_width, popup_height))
+        pygame.draw.rect(self.game.screen, (255, 215, 0), (popup_x, popup_y, popup_width, popup_height), 4)  # Golden border
+        
+        # Level up title with animation effect
+        pulse = math.sin(pygame.time.get_ticks() / 200) * 10 + 40  # Pulsing effect
+        title_font = pygame.font.Font(None, int(36 + pulse/10))
+        title_text = title_font.render(f"LEVEL UP! → {self.game.battle.level_up_stats['level']}", True, (255, 255, 0))
+        self.game.screen.blit(title_text, (popup_x + (popup_width - title_text.get_width()) // 2, popup_y + 30))
+        
+        # Stats changes
+        font = pygame.font.Font(None, 28)
+        y_offset = 90
+        
+        # Draw stat changes with arrows and colors
+        stats = [
+            ("HP", "hp", self.game.GREEN),
+            ("MP", "mp", (50, 50, 255)),
+            ("Attack", "attack", (255, 100, 100)),
+            ("Defense", "defense", (100, 100, 255)),
+            ("Speed", "speed", (255, 255, 100))
+        ]
+        
+        for label, key, color in stats:
+            stat = self.game.battle.level_up_stats[key]
+            
+            # Stat name
+            stat_text = font.render(f"{label}:", True, self.game.WHITE)
+            self.game.screen.blit(stat_text, (popup_x + 50, popup_y + y_offset))
+            
+            # Old value → new value
+            change_text = font.render(f"{stat['old']} → {stat['new']}", True, color)
+            self.game.screen.blit(change_text, (popup_x + 150, popup_y + y_offset))
+            
+            # Increase amount with + sign
+            increase_text = font.render(f"+{stat['increase']}", True, (0, 255, 0))
+            self.game.screen.blit(increase_text, (popup_x + 300, popup_y + y_offset))
+            
+            y_offset += 40
+        
+        # Congratulatory message
+        message = "All stats increased! HP and MP fully restored!"
+        message_text = font.render(message, True, self.game.WHITE)
+        self.game.screen.blit(message_text, (popup_x + (popup_width - message_text.get_width()) // 2, popup_y + 290))
+        
+        # Timer bar showing how long the popup will stay
+        timer_width = int((self.game.battle.level_up_popup_timer / 180) * (popup_width - 40))
+        pygame.draw.rect(self.game.screen, (100, 100, 100), (popup_x + 20, popup_y + popup_height - 20, popup_width - 40, 10))
+        pygame.draw.rect(self.game.screen, (255, 215, 0), (popup_x + 20, popup_y + popup_height - 20, timer_width, 10))

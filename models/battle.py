@@ -15,6 +15,11 @@ class Battle:
         self.damage_target = None  # "player" or "enemy"
         self.SCREEN_WIDTH = screen_width
         
+        # Level up popup properties
+        self.show_level_up_popup = False
+        self.level_up_stats = None
+        self.level_up_popup_timer = 0
+        
         # Determine first attacker based on speed
         if player.speed < enemy.speed:
             self.turn = 1
@@ -79,10 +84,20 @@ class Battle:
             elif level_diff == -1:
                 bonus_text = f" (+10% level bonus)"
                 
+            # Track defeated enemy
+            self.player.defeated_enemies[self.enemy.name] += 1
+            self.player.defeated_enemies["total"] += 1
+                
             self.message += f"\nDefeated the {self.enemy.name} (Lv.{self.enemy.level})! Gained {self.enemy.exp} EXP{bonus_text}!"
-            leveled = self.player.gain_exp(self.enemy.exp)
+            leveled, stat_changes = self.player.gain_exp(self.enemy.exp)
             if leveled:
                 self.message += f"\nLevel up! You are now level {self.player.level}!"
+                self.level_up_stats = stat_changes  # Store the stat changes for the popup
+                self.show_level_up_popup = True
+                self.level_up_popup_timer = 0  # Reset timer to trigger popup
+                print("Level up detected! Showing popup.")  # Debug message
+            else:
+                self.show_level_up_popup = False
         else:
             self.turn = 1  # Enemy's turn
             self.message += f"\n{self.enemy.name}'s turn."
@@ -160,6 +175,17 @@ class Battle:
         # Update damage display timer
         if self.damage_timer > 0:
             self.damage_timer -= 1
+        
+        # Handle level up popup
+        if self.show_level_up_popup:
+            if self.level_up_popup_timer <= 0:
+                # Initialize the timer when popup is first shown
+                self.level_up_popup_timer = 180  # Show for 3 seconds (60 fps * 3)
+            else:
+                # Count down the timer
+                self.level_up_popup_timer -= 1
+                if self.level_up_popup_timer <= 0:
+                    self.show_level_up_popup = False
         
         # Auto-trigger enemy attack if it's enemy's turn
         if self.turn == 1 and not self.action_in_progress and self.state == "choosing":
